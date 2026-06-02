@@ -23,15 +23,8 @@ app = FastAPI(
 )
 
 # Configure CORS Middleware
-# Allows request from local development servers (e.g. Vite default port 5173, Docker, etc.)
-origins = [
-    "http://localhost:5173",
-    "http://localhost:3000",
-    "http://localhost",
-    "http://127.0.0.1:5173",
-    "http://127.0.0.1:3000",
-    "*" # Fallback for wider testing environments
-]
+# Allows requests from origins listed in settings.CORS_ORIGINS
+origins = [origin.strip() for origin in settings.CORS_ORIGINS.split(",") if origin.strip()]
 
 app.add_middleware(
     CORSMiddleware,
