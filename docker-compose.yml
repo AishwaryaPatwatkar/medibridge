@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  # Database Service: PostgreSQL
+  db:
+    image: postgres:15-alpine
+    container_name: medibridge_db
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: medibridge
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - medibridge_network
+
+  # Backend Service: FastAPI
+  backend:
+    build:
+      context: ./backend
+    container_name: medibridge_backend
+    restart: always
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/medibridge
+      - TESSERACT_CMD=tesseract # Fallback override inside container PATH
+    networks:
+      - medibridge_network
+
+  # Frontend Service: React + Nginx
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        - VITE_API_URL=http://localhost:8000
+    container_name: medibridge_frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - medibridge_network
+
+volumes:
+  postgres_data:
+
+networks:
+  medibridge_network:
+    driver: bridge
